@@ -71,3 +71,6 @@ func (j *JsonReader) ReadAll(reader io.Reader) ([]Reservation, error) {
 func NewJsonReader() *JsonReader {
 	return &JsonReader{}
 }
+
+
+

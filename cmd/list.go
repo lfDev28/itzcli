@@ -12,7 +12,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var createdOnly bool
+// var createdOnly bool
 var listAll bool
 var componentNames []string
 var owner []string

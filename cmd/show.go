@@ -31,26 +31,21 @@ Shows the details of the specific IBM Technology Zone reservation.
 `,
 	PreRun: SetLoggingLevel,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		logger.Debug("Listing your reservations...")
-		if len(reservationID) == 0 {
-			return fmt.Errorf("the reservation id is empty; use --reservation-id to specify the ID of a reservation")
-		}
-		apiConfig, err := LoadApiClientConfig(configuration.TechZone)
-		if err != nil {
-			return err
-		}
-		svc, err := techzone.NewReservationWebServiceClient(apiConfig)
-		if err != nil {
-			return errors.Wrap(err, "could not create web service client")
-		}
-		w := techzone.NewModelWriter(reflect.TypeOf(techzone.Reservation{}).Name(), GetFormat(cmd))
-		rez, err := svc.Get(reservationID)
-		if err != nil {
-			return err
-		}
-		return w.WriteOne(cmd.OutOrStdout(), rez)
-	},
+        logger.Debug("Listing your reservations...")
+        rez, err := GetReservationDetails(reservationID)
+        if err != nil {
+            return err
+        }
+        w := techzone.NewModelWriter(reflect.TypeOf(techzone.Reservation{}).Name(), GetFormat(cmd))
+        return w.WriteOne(cmd.OutOrStdout(), rez)
+    },
 }
+
+
+
+
+
+
 
 var showPipelinesCmd = &cobra.Command{
 	Use:   PipelineResource,
@@ -107,4 +102,24 @@ func init() {
 	showCmd.AddCommand(showPipelinesCmd)
 
 	rootCmd.AddCommand(showCmd)
+}
+
+// Helper function to be used by the show command and deploy command
+func GetReservationDetails(reservationID string) (*techzone.Reservation, error) {
+    if len(reservationID) == 0 {
+        return nil, fmt.Errorf("the reservation id is empty")
+    }
+    apiConfig, err := LoadApiClientConfig(configuration.TechZone)
+    if err != nil {
+        return nil, err
+    }
+    svc, err := techzone.NewReservationWebServiceClient(apiConfig)
+    if err != nil {
+        return nil, errors.Wrap(err, "could not create web service client")
+    }
+    rez, err := svc.Get(reservationID)
+    if err != nil {
+        return nil, err
+    }
+    return rez, nil
 }

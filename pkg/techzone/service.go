@@ -4,12 +4,13 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	logger "github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 	"io"
 	"reflect"
 	"text/tabwriter"
 	"text/template"
+
+	logger "github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 
 	"github.com/cloud-native-toolkit/itzcli/pkg"
 	"github.com/cloud-native-toolkit/itzcli/pkg/configuration"
@@ -224,6 +225,10 @@ func NewModelWriter(forType string, format string) ModelWriter {
 	return writers.Load(forType, format)
 }
 
+
+
+
+
 func init() {
 	reservationType := reflect.TypeOf(Reservation{})
 	logger.Tracef("Registering writers for type: %s", reservationType)
@@ -231,3 +236,4 @@ func init() {
 	writers.Register(reservationType.Name(), DefaultOutputFormat, &TextReservationWriter{})
 	writers.Register(reservationType.Name(), "json", &JsonReservationWriter{})
 }
+

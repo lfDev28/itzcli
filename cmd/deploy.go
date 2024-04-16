@@ -4,13 +4,17 @@ import (
 	"fmt"
 
 	"github.com/cloud-native-toolkit/itzcli/pkg"
-
 	"github.com/cloud-native-toolkit/itzcli/pkg/configuration"
 	"github.com/cloud-native-toolkit/itzcli/pkg/solutions"
+	"github.com/cloud-native-toolkit/itzcli/pkg/techzone"
 	"github.com/pkg/errors"
 	logger "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
+
+
+var resId string
+
 
 var deployCmd = &cobra.Command{
 	Use:    DeployAction,
@@ -43,23 +47,41 @@ Example:
 	PreRunE: func(cmd *cobra.Command, args []string) error {
 		SetLoggingLevel(cmd, args)
 
-		if err := AssertFlag(pipelineID, NotNull, "you must specify a valid pipeline ID using --pipeline-id"); err != nil {
-			return err
-		}
+		
+        if err := AssertFlag(pipelineID, NotNull, "you must specify a valid pipeline ID using --pipeline-id"); err != nil {
+            return err
+        }
 
-		if err := AssertFlag(clusterURL, ValidURL, "you must specify a valid URL using --cluster-api-url"); err != nil {
-			return err
-		}
+        // If a reservation ID is provided, get the cluster details from the reservation
+        if resId != "" {
+            rez, err := GetReservationDetails(resId)
+            if err != nil {
+                return err
+            }
 
-		if err := AssertFlag(clusterUsername, NotNull, "you must specify a valid username using --cluster-username"); err != nil {
-			return err
-		}
+            clusterDetails, err := getClusterAdminCredentials(rez)
+            if err != nil {
+                return err
+            }
 
-		if err := AssertFlag(clusterPassword, NotNull, "you must specify a valid value using --cluster-password"); err != nil {
-			return err
-		}
+            clusterURL = clusterDetails.ClusterAPIURL
+            clusterUsername = clusterDetails.ClusterAdminUsername
+            clusterPassword = clusterDetails.ClusterAdminPassword
+        } else {
+            if err := AssertFlag(clusterURL, ValidURL, "you must specify a valid URL using --cluster-api-url"); err != nil {
+                return err
+            }
 
-		return nil
+            if err := AssertFlag(clusterUsername, NotNull, "you must specify a valid username using --cluster-username"); err != nil {
+                return err
+            }
+
+            if err := AssertFlag(clusterPassword, NotNull, "you must specify a valid value using --cluster-password"); err != nil {
+                return err
+            }
+        }
+
+        return nil
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		logger.Debugf("Deploying your pipeline %s to cluster %s...", pipelineID, clusterURL)
@@ -80,7 +102,7 @@ Example:
 		// Look up the pipeline location, and get that.
 		pipelineURI, found := LookupAnnotation(sol, PipelineAnnotation)
 		if !found {
-			return fmt.Errorf("Could not find the pipeline location from catalog entry with id: %s", pipelineID)
+			return fmt.Errorf("could not find the pipeline location from catalog entry with id: %s", pipelineID)
 		}
 
 		pipelineRunURI, found := LookupAnnotation(sol, PipelineRunAnnotation)
@@ -122,15 +144,57 @@ func init() {
 	deployPipelineCmd.Flags().StringVarP(&clusterUsername, "cluster-username", "u", "", "A username to login to the target cluster (required)")
 	deployPipelineCmd.Flags().StringVarP(&clusterPassword, "cluster-password", "P", "", "A password to login to the target cluster (required)")
 	deployPipelineCmd.Flags().BoolVarP(&acceptDefaults, "accept-defaults", "d", false, "Accept defaults for pipeline parameters without asking (optional)")
+	deployPipelineCmd.Flags().StringVarP(&resId, "reservation-id", "r", "", "The reservation id to deploy it to (optional)")
 
-	for _, pname := range []string{"pipeline-id", "cluster-api-url", "cluster-username", "cluster-password"} {
-		if err := deployPipelineCmd.MarkFlagRequired(pname); err != nil {
-			panic(fmt.Sprintf("could not mark %s required", pname))
-		}
-	}
+	// for _, pname := range []string{"pipeline-id", "cluster-api-url", "cluster-username", "cluster-password"} {
+	// 	if err := deployPipelineCmd.MarkFlagRequired(pname); err != nil {
+	// 		panic(fmt.Sprintf("could not mark %s required", pname))
+	// 	}
+	// }
 
 	//deployPipelineCmd.Flags().BoolVarP(&useContainer, "use-container", "c", DefaultUseContainer, "If true, the commands run in a container")
 	deployCmd.AddCommand(deployPipelineCmd)
 
 	rootCmd.AddCommand(deployCmd)
 }
+
+
+// Return type interface
+type ClusterDetails struct {
+	ClusterAPIURL string
+	ClusterAdminUsername string
+	ClusterAdminPassword string
+}
+
+// Function to get the Cluster Admin Username and Password from the response
+// Loop throug the service links property and get the values from the labels: "Cluster Admin Username" and "Cluster Admin Password"}
+// This function will be used in another command which will be to show and deploy in one command.
+func getClusterAdminCredentials(rez *techzone.Reservation) (ClusterDetails, error) {
+	var details ClusterDetails
+	for _, link := range rez.ServiceLinks {
+		if link.Label == "Cluster Admin Username" {
+			username, ok := link.Data.(string)
+			if !ok {
+				return details, errors.New("could not convert username to string")
+			}
+			details.ClusterAdminUsername = username
+		}
+		if link.Label == "Cluster Admin Password" {
+			password, ok := link.Data.(string)
+			if !ok {
+				return details, errors.New("could not convert password to string")
+			}
+			details.ClusterAdminPassword = password
+		} 
+		if link.Label == "Cluster API URL" {
+			url, ok := link.Data.(string)
+			if !ok {
+				return details, errors.New("could not convert url to string")
+			}
+			details.ClusterAPIURL = url
+		}
+	}
+	return details, nil
+	
+}
+
