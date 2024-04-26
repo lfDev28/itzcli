@@ -216,7 +216,7 @@ func ExecutePipeline(cmd *cobra.Command, execArgs PipelineExecArgs) error {
 		return err
 	}
 	pl := pipeline.(*v1beta1.Pipeline)
-	if err != nil {
+	if pl == nil {
 		return fmt.Errorf("error trying to get pipeline at \"%s\": %v", execArgs.PipelineURI, err)
 	}
 	options := pkg.DefaultParseOptions

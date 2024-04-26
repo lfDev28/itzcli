@@ -42,11 +42,6 @@ Shows the details of the specific IBM Technology Zone reservation.
 }
 
 
-
-
-
-
-
 var showPipelinesCmd = &cobra.Command{
 	Use:   PipelineResource,
 	Short: fmt.Sprintf("Shows the details of the specific %s from the %s catalog", PipelineResource, TechZoneShort),
