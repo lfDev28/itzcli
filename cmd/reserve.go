@@ -35,7 +35,6 @@ var reserveCmd = &cobra.Command{
 	Short:  "Allows you to reserve environments",
 	Long:   "Allows you to reserve environments",
 	PreRun: SetLoggingLevel,
-	Hidden: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		logger.Debug("Reserving your environment...")
 		// Need to load all of the filter flags and then use them when reserving the environment
@@ -144,11 +143,6 @@ func getJSONRequest(purpose, description, email, region string) string {
 	// Format the start and end times
 	start := now.Format("2006-01-02T15:04:05.000Z")
 	end = now.Add(time.Hour * time.Duration(hours)).Format("2006-01-02T15:04:05.000Z")
-
-	
-
-
-	
 
 
     JSON_Request := fmt.Sprintf(`{
