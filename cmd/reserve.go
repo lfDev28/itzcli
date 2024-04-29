@@ -95,6 +95,8 @@ var reserveCmd = &cobra.Command{
 			return err
 		}
 
+		// Need to write the response to stdout so that other scripts can use the response
+		fmt.Println(string(body))
 		logger.Debug(fmt.Sprintf("Response: %s", body))
 
 		logger.Debug("Environment reservation has started")
@@ -127,7 +129,9 @@ func getJSONRequest(purpose, description, email, region string) string {
         "Practice / Self-Education": 47,
     }
 
-	now := time.Now().UTC()
+
+	// Replace with .UTC() for production
+	now := time.Now()
 	
     // Get the number of hours to add for the given purpose
     hours, exists := purposeHours[purpose]
@@ -136,11 +140,10 @@ func getJSONRequest(purpose, description, email, region string) string {
     }
 
 	// We need to add the hours to the current time to get the end time
-	endUnformatted := now.Add(time.Hour * time.Duration(hours))
 
 	// Format the start and end times
 	start := now.Format("2006-01-02T15:04:05.000Z")
-	end = endUnformatted.Format("2006-01-02T15:04:05.000Z")
+	end = now.Add(time.Hour * time.Duration(hours)).Format("2006-01-02T15:04:05.000Z")
 
 	
 
