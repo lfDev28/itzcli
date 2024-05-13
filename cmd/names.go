@@ -12,6 +12,7 @@ const LoginAction = "login"
 const ReserveAction = "reserve"
 const ShowAction = "show"
 const VersionAction = "version"
+const StatusAction = "status"
 
 const ApiResource = "api"
 const BuildResource = "build"

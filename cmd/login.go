@@ -13,6 +13,7 @@ import (
 )
 
 var filePath string
+var apiKey string
 
 // loginCmd represents the login command
 var loginCmd = &cobra.Command{
@@ -52,6 +53,12 @@ using the "--from-file" flag, as shown here:
 		if filePath != "" {
 			return TextFileLogin(cmd, args)
 		}
+
+		if apiKey != "" {
+			return ApiKeyLogin(cmd, args)
+		}
+
+		
 		// start the api
 		apiArgs := []string{"execute", "api"}
 		rootCmd.SetArgs(apiArgs) // set the command's args
@@ -60,6 +67,18 @@ using the "--from-file" flag, as shown here:
 		return auth.GetToken()
 	},
 }
+
+func ApiKeyLogin(cmd *cobra.Command, args []string) error {
+	logger.Debugf("Saving login credentials for reservations using API key %s...", apiKey)
+	viper.Set(fmt.Sprintf("%s.api.key", "techzone"), apiKey)
+	err := viper.WriteConfig()
+	if err != nil {
+		return err
+	}
+	logger.Tracef("Finished writing credentials for %s using API key %s...", "reservations", apiKey)
+	return nil
+}
+
 
 func TextFileLogin(cmd *cobra.Command, args []string) error {
 
@@ -79,5 +98,6 @@ func TextFileLogin(cmd *cobra.Command, args []string) error {
 
 func init() {
 	loginCmd.Flags().StringVarP(&filePath, "from-file", "f", "", "The name of the file that contains the token.")
+	loginCmd.Flags().StringVarP(&apiKey, "api_key", "k", "", "The API key to use for authentication.")
 	rootCmd.AddCommand(loginCmd)
 }

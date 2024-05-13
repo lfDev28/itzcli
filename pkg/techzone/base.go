@@ -15,6 +15,7 @@ type ServiceLink struct {
 	Data interface{} `json:"Url"`
 }
 
+
 type Reservation struct {
 	//OpportunityId  string
 	CollectionId   string
