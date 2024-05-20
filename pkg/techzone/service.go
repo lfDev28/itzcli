@@ -62,20 +62,9 @@ func (c *ReservationWebServiceClient) Extend(id string, reqBody string) (*Extens
 		return nil, err
 	}
 
-	logger.Debugf("Data received: %s", data)
-
 	jsoner := NewJsonExtensionReader()
-
-	logger.Debugf("Reading data...")
-
 	dataR := bytes.NewReader(data)
-
-	logger.Debugf("Data read...")
-
 	rez, err := jsoner.Read(dataR)
-
-	logger.Debugf("Data read: %v", rez)
-
 
 	return &rez, err
 }	
@@ -88,7 +77,6 @@ func (c *ReservationWebServiceClient) Reserve(reqBody string) (*Reservation, err
 
 	logger.Debugf("Using API URL \"%s\" and token \"%s\" to create a new reservation...",
 		fullUrl, c.Token)
-
 
 
 	data, err := pkg.ReadHttpPostT(fullUrl, c.Token, bytes.NewBuffer([]byte(reqBody)), "application/json")

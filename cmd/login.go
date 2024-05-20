@@ -70,9 +70,10 @@ using the "--from-file" flag, as shown here:
 
 func ApiKeyLogin(cmd *cobra.Command, args []string) error {
 	logger.Debugf("Saving login credentials for reservations using API key %s...", apiKey)
-	viper.Set(fmt.Sprintf("%s.api.token", "techzone"), apiKey)
+	viper.Set(fmt.Sprintf("%s.api.token", "techzone"), string(apiKey))
 	err := viper.WriteConfig()
 	if err != nil {
+		logger.Errorf("Error writing config: %v", err)
 		return err
 	}
 	logger.Tracef("Finished writing credentials for %s using API key %s...", "reservations", apiKey)

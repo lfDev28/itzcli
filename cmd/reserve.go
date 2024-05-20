@@ -77,7 +77,7 @@ func init() {
 // Time getter helper function, returns the start and end times
 func getStartAndEndTimes() (string, string) { 
 	// Map that maps the purpose to the number of hours to add to current time.
-	now := time.Now().Local().UTC()
+	now := time.Now().UTC()
 	
 	// Get the number of hours to add for the given purpose
     hours, exists := purposeHours[purpose]
