@@ -26,15 +26,83 @@ type Environment struct {
 	Description string `json:"description"`
 }
 
+
+type ExtendReservationParams struct {
+	Body string
+	ApiKey string
+}
+
+// When extending, you just receive status: ok and a new end date
+
+
 type ReservationServiceClient interface {
 	Get(id string) (*Reservation, error)
 	GetAll(f Filter) ([]Reservation, error)
+	Reserve(reqBody string) (*Reservation, error)
+	Extend(id string, reqBody string) (*Extension, error)
 }
 
 type ReservationWebServiceClient struct {
 	BaseURL string
 	Token   string
 }
+
+// Extend implements ReservationServiceClient.
+func (c *ReservationWebServiceClient) Extend(id string, reqBody string) (*Extension, error) {
+	path := viper.GetString("reservation.api.path")
+	fullUrl := fmt.Sprintf("%s/%s/%s", c.BaseURL, path, id)
+
+	logger.Debugf("Using API URL \"%s\" and token \"%s\" to extend reservation...",
+		fullUrl, c.Token)
+
+
+	data, err := pkg.ReadHttpPostT(fullUrl, c.Token, bytes.NewBuffer([]byte(reqBody)), "application/json")
+	if err != nil {
+		logger.Errorf("Error extending reservation: %v", err)
+		return nil, err
+	}
+
+	logger.Debugf("Data received: %s", data)
+
+	jsoner := NewJsonExtensionReader()
+
+	logger.Debugf("Reading data...")
+
+	dataR := bytes.NewReader(data)
+
+	logger.Debugf("Data read...")
+
+	rez, err := jsoner.Read(dataR)
+
+	logger.Debugf("Data read: %v", rez)
+
+
+	return &rez, err
+}	
+
+
+// Post
+func (c *ReservationWebServiceClient) Reserve(reqBody string) (*Reservation, error) {
+	path := viper.GetString("reservation.api.path")
+	fullUrl := fmt.Sprintf("%s/%s", c.BaseURL, path)
+
+	logger.Debugf("Using API URL \"%s\" and token \"%s\" to create a new reservation...",
+		fullUrl, c.Token)
+
+
+
+	data, err := pkg.ReadHttpPostT(fullUrl, c.Token, bytes.NewBuffer([]byte(reqBody)), "application/json")
+	if err != nil {
+		return nil, err
+	}
+	jsoner := NewJsonReader()
+	dataR := bytes.NewReader(data)
+	rez, err := jsoner.Read(dataR)
+
+
+	return &rez, err
+}
+
 
 // Get
 func (c *ReservationWebServiceClient) Get(id string) (*Reservation, error) {
@@ -104,6 +172,8 @@ type EnvironmentServiceClient interface {
 	Get(id string) (*Environment, error)
 	GetAll(f Filter) ([]Environment, error)
 }
+
+//
 
 type EnvironmentWebServiceClient struct {
 	BaseURL string
@@ -180,7 +250,7 @@ func (t *TextReservationWriter) WriteMany(w io.Writer, val interface{}) error {
 	fmt.Fprintln(tab, "NAME\tID\tSTATUS\tPROVISIONED\tEXTENDED\t")
 	var rez = val.([]Reservation)
 	for _, r := range rez {
-		fmt.Fprintln(tab, fmt.Sprintf("%s\t%s\t%s\t%s\t%d\t", r.Name, r.ReservationId, r.Status, r.ProvisionDate, r.ExtendCount))
+		fmt.Fprintf(tab, "%s\t%s\t%s\t%s\t%d\n", r.Name, r.ReservationId, r.Status, r.ProvisionDate, r.ExtendCount)
 	}
 	return tab.Flush()
 }
@@ -202,6 +272,49 @@ func (j *JsonReservationWriter) WriteMany(w io.Writer, val interface{}) error {
 	}
 	return err
 }
+
+
+type JsonExtensionWriter struct{}
+
+func (j *JsonExtensionWriter) WriteOne(w io.Writer, val interface{}) error {
+	bytes, err := json.Marshal(val)
+	if err == nil {
+		w.Write(bytes)
+	}
+	return err
+}
+
+func (j *JsonExtensionWriter) WriteMany(w io.Writer, val interface{}) error {
+	bytes, err := json.Marshal(val)
+	if err == nil {
+		w.Write(bytes)
+	}
+	return err
+}
+
+type TextExtensionWriter struct{}
+
+func (t *TextExtensionWriter) WriteOne(w io.Writer, val interface{}) error {
+	consoleTemplate := ` - {{.Message}} - {{.Status}}`
+
+	tmpl, err := template.New("atkext").Parse(consoleTemplate)
+	if err == nil {
+		return tmpl.Execute(w, val)
+	}
+
+	return nil
+}
+
+func (t *TextExtensionWriter) WriteMany(w io.Writer, val interface{}) error {
+	tab := tabwriter.NewWriter(w, 30, 4, 2, ' ', tabwriter.FilterHTML)
+	fmt.Fprintln(tab, "MESSAGE\tSTATUS\t")
+	var rez = val.([]Extension)
+	for _, r := range rez {
+		fmt.Fprintf(tab, "%s\t%d\n", r.Message, r.Status)
+	}
+	return tab.Flush()
+}
+
 
 func (w *RegisteredModelWriters) Register(forType string, format string, writer ModelWriter) {
 	if w.registered == nil {
@@ -225,15 +338,15 @@ func NewModelWriter(forType string, format string) ModelWriter {
 	return writers.Load(forType, format)
 }
 
-
-
-
-
 func init() {
 	reservationType := reflect.TypeOf(Reservation{})
 	logger.Tracef("Registering writers for type: %s", reservationType)
 	writers.Register(reservationType.Name(), "text", &TextReservationWriter{})
 	writers.Register(reservationType.Name(), DefaultOutputFormat, &TextReservationWriter{})
 	writers.Register(reservationType.Name(), "json", &JsonReservationWriter{})
+	extensionType := reflect.TypeOf(Extension{})
+	logger.Tracef("Registering writers for type: %s", extensionType)
+	writers.Register(extensionType.Name(), "text", &TextExtensionWriter{})
+	writers.Register(extensionType.Name(), "json", &JsonExtensionWriter{})
+	writers.Register(extensionType.Name(), DefaultOutputFormat, &TextExtensionWriter{})
 }
-

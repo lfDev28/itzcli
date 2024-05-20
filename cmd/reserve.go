@@ -1,22 +1,16 @@
 package cmd
 
 import (
-	"bytes"
 	"fmt"
-	"io"
-	"net/http"
+	"reflect"
 	"time"
 
 	"github.com/cloud-native-toolkit/itzcli/pkg/configuration"
+	"github.com/cloud-native-toolkit/itzcli/pkg/techzone"
 	logger "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
-// For now, we can hard code a users array with their desired amount of environments and the deployment configurations / MAS Versions for each deployment
-
-// Later, we can make this customizable with flags etc...
-
-var postUrl = "https://api.techzone.ibm.com/api/reservation/ibmcloud-2"
 
 var email string
 var region string
@@ -24,10 +18,11 @@ var purpose string
 var description string
 var start string
 var end string
-var api_key string
 
-
-//TODO: Figure out how to add an auto extension to the limit of the reservation, or figure out how to do it in a separate script / command.
+var purposeHours = map[string]int{
+	"Test": 12,
+	"Practice / Self-Education": 48,
+}
 
 
 var reserveCmd = &cobra.Command{
@@ -39,71 +34,31 @@ var reserveCmd = &cobra.Command{
 		logger.Debug("Reserving your environment...")
 		// Need to load all of the filter flags and then use them when reserving the environment
 
-
 		apiConfig, err := LoadApiClientConfig(configuration.TechZone)
 		if err != nil {
 			return err
 		}
-
-		if api_key == "" {
-			api_key = apiConfig.Token
-		}
-
-		// We need to generate a few things to fulfill the JSON request such as the start and end times, the user, the region, the template etc...
-		// We will use the users array to generate the JSON request for each user and then send the request to the TechZone API to reserve the environment
-		// We will need to loop through the users array and generate the JSON request for each user and then send the request to the TechZone API to reserve the environment
-
-		logger.Debug(fmt.Sprintf("Reserving environment for %s in %s region", email, region))
-		logger.Debug(fmt.Sprintf("Purpose: %s", purpose))
-		logger.Debug(fmt.Sprintf("Description: %s", description))
-		logger.Debug(fmt.Sprintf("ApiKey: %s", api_key))
-
-		JSON_Request := getJSONRequest(purpose, description, email, region)
-
-
-		// We will need to send a POST request to the TechZone API to reserve the environment and use the header with Bearer and the API Key
 		
-		r, err := http.NewRequest("POST", postUrl, bytes.NewBuffer([]byte(JSON_Request)))
+		if start == "" || end == "" {
+			start, end = getStartAndEndTimes()
+		}
 
+		body := getJSONRequest(purpose, description, email, region, start, end)
+
+		svc, err := techzone.NewReservationWebServiceClient(apiConfig)
 		if err != nil {
-			logger.Error("Error creating request")
 			return err
 		}
 
-		r.Header.Set("Content-Type", "application/json")
-		r.Header.Set("Authorization", "Bearer " + api_key)
-
-		logger.Debug(fmt.Sprintf("Sending request to %s", postUrl))
-
-		client := &http.Client{}
-		resp, err := client.Do(r)
-
+		rez, err := svc.Reserve(body)
 		if err != nil {
-			logger.Error(fmt.Sprintf("Error sending request: %s", err))
 			return err
 		}
+
+		w := techzone.NewModelWriter(reflect.TypeOf(techzone.Reservation{}).Name(), GetFormat(cmd))
 		
-
-		defer resp.Body.Close()
-
-		body, err := io.ReadAll(resp.Body)
-
-
-		if err != nil {
-			logger.Error(fmt.Sprintf("Error reading response body: %s", err))
-			return err
-		}
-
-		// Need to write the response to stdout so that other scripts can use the response
-		fmt.Println(string(body))
-		logger.Debug(fmt.Sprintf("Response: %s", body))
-
-		logger.Debug("Environment reservation has started")
-
-		// This function can be run on a Friday for example, it will reserve all the environments for our team, and then on Sunday, we can run the ITZ Deploy command to deploy the environments.
-		// This will allow us to have the environments ready for the week ahead. When we create the ITZ Deploy command, we can make it so that it will deploy the environments that have been reserved for us.		
-
-		return nil
+		return w.WriteOne(cmd.OutOrStdout(), rez)
+		
 	},
 }
 
@@ -114,37 +69,31 @@ func init() {
 	reserveCmd.Flags().StringVarP(&description, "description", "d", "", "The description of the environment")
 	reserveCmd.Flags().StringVarP(&start, "start", "s", "", "The start time of the reservation")
 	reserveCmd.Flags().StringVarP(&end, "end", "n", "", "The end time of the reservation")
-	reserveCmd.Flags().StringVarP(&api_key, "api_key", "a", "", "The API Key to use for the request")
 
 	rootCmd.AddCommand(reserveCmd)
 }
 
 
-func getJSONRequest(purpose, description, email, region string) string {
-    // Map that maps the purpose to the number of hours to add to current time.
-	// TODO: Change to add the current time - 1 minute rather than a whole hour. For example 11Hrs 59 minutes rather than 12 hours.
-    purposeHours := map[string]int{
-        "Test": 11,
-        "Practice / Self-Education": 47,
-    }
-
-
-	// Replace with .UTC() for production
-	now := time.Now()
+// Time getter helper function, returns the start and end times
+func getStartAndEndTimes() (string, string) { 
+	// Map that maps the purpose to the number of hours to add to current time.
+	now := time.Now().Local().UTC()
 	
-    // Get the number of hours to add for the given purpose
+	// Get the number of hours to add for the given purpose
     hours, exists := purposeHours[purpose]
     if !exists {
         hours = 0 // Default to 0 if the purpose is not in the map
     }
 
-	// We need to add the hours to the current time to get the end time
-
 	// Format the start and end times
 	start := now.Format("2006-01-02T15:04:05.000Z")
-	end = now.Add(time.Hour * time.Duration(hours)).Format("2006-01-02T15:04:05.000Z")
+	end = now.Add((time.Hour * time.Duration(hours)) - time.Minute).Format("2006-01-02T15:04:05.000Z")
+
+	return start, end
+}
 
 
+func getJSONRequest(purpose, description, email, region, start, end string) string {
     JSON_Request := fmt.Sprintf(`{
 		"id": null,
 		"name": "OpenShift Cluster (VMware on IBM Cloud) - UPI - Public",

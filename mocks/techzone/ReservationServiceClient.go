@@ -12,6 +12,36 @@ type ReservationServiceClient struct {
 	mock.Mock
 }
 
+// Extend provides a mock function with given fields: id, reqBody
+func (_m *ReservationServiceClient) Extend(id string, reqBody string) (*techzone.Extension, error) {
+	ret := _m.Called(id, reqBody)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Extend")
+	}
+
+	var r0 *techzone.Extension
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string, string) (*techzone.Extension, error)); ok {
+		return rf(id, reqBody)
+	}
+	if rf, ok := ret.Get(0).(func(string, string) *techzone.Extension); ok {
+		r0 = rf(id, reqBody)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*techzone.Extension)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(string, string) error); ok {
+		r1 = rf(id, reqBody)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // Get provides a mock function with given fields: id
 func (_m *ReservationServiceClient) Get(id string) (*techzone.Reservation, error) {
 	ret := _m.Called(id)
@@ -65,6 +95,36 @@ func (_m *ReservationServiceClient) GetAll(f techzone.Filter) ([]techzone.Reserv
 
 	if rf, ok := ret.Get(1).(func(techzone.Filter) error); ok {
 		r1 = rf(f)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// Reserve provides a mock function with given fields: reqBody
+func (_m *ReservationServiceClient) Reserve(reqBody string) (*techzone.Reservation, error) {
+	ret := _m.Called(reqBody)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Reserve")
+	}
+
+	var r0 *techzone.Reservation
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string) (*techzone.Reservation, error)); ok {
+		return rf(reqBody)
+	}
+	if rf, ok := ret.Get(0).(func(string) *techzone.Reservation); ok {
+		r0 = rf(reqBody)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*techzone.Reservation)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(reqBody)
 	} else {
 		r1 = ret.Error(1)
 	}

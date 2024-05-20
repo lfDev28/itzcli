@@ -152,7 +152,7 @@ func init() {
 	// 	}
 	// }
 
-	//deployPipelineCmd.Flags().BoolVarP(&useContainer, "use-container", "c", DefaultUseContainer, "If true, the commands run in a container")
+	// deployPipelineCmd.Flags().BoolVarP(&useContainer, "use-container", "c", DefaultUseContainer, "If true, the commands run in a container")
 	deployCmd.AddCommand(deployPipelineCmd)
 
 	rootCmd.AddCommand(deployCmd)

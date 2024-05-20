@@ -30,6 +30,11 @@ type Reservation struct {
 	Status         string
 }
 
+type Extension struct {
+	Message string `json:"message"`
+	Status  int `json:"status"`
+}
+
 type Filter func(Reservation) bool
 
 func NoFilter() Filter {
@@ -55,6 +60,7 @@ type Reader interface {
 	ReadAll(io.Reader) ([]Reservation, error)
 }
 
+
 type JsonReader struct{}
 
 func (j *JsonReader) Read(reader io.Reader) (Reservation, error) {
@@ -69,8 +75,47 @@ func (j *JsonReader) ReadAll(reader io.Reader) ([]Reservation, error) {
 	return res, err
 }
 
+// Extension reacer
+type ExtensionReader interface {
+	Read(io.Reader) (Extension, error)
+}
+
+type JsonExtensionReader struct{}
+
+func NewJsonExtensionReader() *JsonExtensionReader {
+	return &JsonExtensionReader{}
+}
+
+
+func (j *JsonExtensionReader) Read(reader io.Reader) (Extension, error) {
+	var res Extension
+	err := json.NewDecoder(reader).Decode(&res)
+	return res, err
+
+}
+
 func NewJsonReader() *JsonReader {
 	return &JsonReader{}
+}
+
+// JSON Writers
+type Writer interface {
+	Write(io.Writer, Reservation) error
+	WriteAll(io.Writer, []Reservation) error
+}
+
+type JsonWriter struct{}
+
+func (j *JsonWriter) Write(writer io.Writer, res Reservation) error {
+	return json.NewEncoder(writer).Encode(res)
+}
+
+func (j *JsonWriter) WriteAll(writer io.Writer, res []Reservation) error {
+	return json.NewEncoder(writer).Encode(res)
+}
+
+func NewJsonWriter() *JsonWriter {
+	return &JsonWriter{}
 }
 
 

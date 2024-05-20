@@ -3,10 +3,11 @@ package pkg
 import (
 	b64 "encoding/base64"
 	"fmt"
-	logger "github.com/sirupsen/logrus"
 	"io"
 	"net/http"
 	"strings"
+
+	logger "github.com/sirupsen/logrus"
 )
 
 type ServiceClientAuthType string
@@ -62,7 +63,7 @@ func ReadHttpGetBWithFunc(url string, user string, password string, handler Retu
 
 func readHttpGet(url string, auth string, handler ReturnCodeHandlerFunc) ([]byte, error) {
 	client := &http.Client{}
-	req, err := http.NewRequest("GET", fmt.Sprintf("%s", url), nil)
+	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -86,3 +87,42 @@ func readHttpGet(url string, auth string, handler ReturnCodeHandlerFunc) ([]byte
 
 	return io.ReadAll(resp.Body)
 }
+
+
+func readHttpPost(url string, auth string, body io.Reader, contentType string, handler ReturnCodeHandlerFunc) ([]byte, error) {
+	client := &http.Client{}
+	req, err := http.NewRequest("POST", url, body)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Authorization", auth)
+	req.Header.Set("Content-Type", contentType)
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	//goland:noinspection GoUnhandledErrorResult
+	defer resp.Body.Close()
+
+	logger.Tracef("Got response: %d", resp.StatusCode)
+
+	if resp.StatusCode != 200 {
+		logger.Trace("Preparing to call handler...")
+		if handler != nil {
+			logger.Trace("Calling handler...")
+			return nil, handler(resp.StatusCode)
+		}
+		return nil, fmt.Errorf("error while trying to communicate with server: %v", resp.Status)
+	}
+
+	return io.ReadAll(resp.Body)
+}
+
+func ReadHttpPostT(url string, token string, body io.Reader, contentType string) ([]byte, error) {
+	return ReadHttpPostTWithFunc(url, token, body, contentType, nil)
+}
+
+func ReadHttpPostTWithFunc(url string, token string, body io.Reader, contentType string, handler ReturnCodeHandlerFunc) ([]byte, error) {
+	return readHttpPost(url, "Bearer "+strings.TrimSpace(token), body, contentType, handler)
+}
+
