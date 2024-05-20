@@ -1,5 +1,12 @@
 # itz CHANGELOG
 
+## v.0.1.32
+
+- Fixed `itz login` command, --api_key was not working correctly.
+- Removed `itz status` in replacement for using the --json flag that was already implimented.
+- Added support for `itz extend`, to extend reservations.
+- Added support for ReservationWebServiceClients to use POST requests for reservations.
+
 ## v.0.1.31
 
 - Added in support for helper command `itz status` to show the status of either a reservation or a pipeline. Currently only implemented for reservations.
