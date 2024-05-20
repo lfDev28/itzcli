@@ -4,7 +4,7 @@ set -ou pipefail
 
 ITZ_INSTALL_HOME=${ITZ_INSTALL_HOME:-/usr/local}
 ITZ_INSTALL_BIN_DIR=${ITZ_INSTALL_HOME}/bin
-ITZ_INSTALL_VER=${ITZ_INSTALL_VER:-v0.1.32}
+ITZ_INSTALL_VER=${ITZ_INSTALL_VER:-v.0.1.32}
 
 echo "Installing itz to ${ITZ_INSTALL_BIN_DIR}..."
 
@@ -22,6 +22,7 @@ assert_installed tar
 
 # Download the binary to the /tmp folder for the OS
 INSTALL_OS=$(uname -s)
+echo "Detected OS: ${INSTALL_OS}"
 if [[ "${INSTALL_OS:-none}" == "Linux" ]]; then
   ITZ_RELEASE_URL=https://github.com/lfDev28/itzcli/releases/download/${ITZ_INSTALL_VER}/itzcli-linux-amd64.tar.gz
 elif [[ "${INSTALL_OS:-none}" == "Darwin" ]]; then
@@ -30,6 +31,8 @@ else
     echo "${INSTALL_OS} is currently not supported for installing ITZ with this script."
     exit 1
 fi
+
+echo "Downloading from ${ITZ_RELEASE_URL}"
 
 curl -sS -L -o /tmp/itzcli.tar.gz "${ITZ_RELEASE_URL}"
 
