@@ -64,7 +64,10 @@ Example:
                 return err
             }
 
-            clusterURL = clusterDetails.ClusterAPIURL
+			logger.Tracef("Cluster Details: %v", clusterDetails)
+			logger.Tracef(clusterDetails.ClusterURL, clusterDetails.ClusterAdminUsername, clusterDetails.ClusterAdminPassword)
+
+            clusterURL = clusterDetails.ClusterURL
             clusterUsername = clusterDetails.ClusterAdminUsername
             clusterPassword = clusterDetails.ClusterAdminPassword
         } else {
@@ -161,7 +164,7 @@ func init() {
 
 // Return type interface
 type ClusterDetails struct {
-	ClusterAPIURL string
+	ClusterURL string
 	ClusterAdminUsername string
 	ClusterAdminPassword string
 }
@@ -171,7 +174,10 @@ type ClusterDetails struct {
 // This function will be used in another command which will be to show and deploy in one command.
 func getClusterAdminCredentials(rez *techzone.Reservation) (ClusterDetails, error) {
 	var details ClusterDetails
+
+
 	for _, link := range rez.ServiceLinks {
+		logger.Tracef("Link: %v", link.Label)
 		if link.Label == "Cluster Admin Username" {
 			username, ok := link.Data.(string)
 			if !ok {
@@ -186,12 +192,12 @@ func getClusterAdminCredentials(rez *techzone.Reservation) (ClusterDetails, erro
 			}
 			details.ClusterAdminPassword = password
 		} 
-		if link.Label == "Cluster API URL" {
+		if link.Label == "API URL" {
 			url, ok := link.Data.(string)
 			if !ok {
 				return details, errors.New("could not convert url to string")
 			}
-			details.ClusterAPIURL = url
+			details.ClusterURL = url
 		}
 	}
 	return details, nil
