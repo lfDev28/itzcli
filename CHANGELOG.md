@@ -1,5 +1,11 @@
 # itz CHANGELOG
 
+## v.0.1.33
+
+- Fixed `itz doctor` when running in a container
+- Added OpenShift CLI to the doctor checks
+- Bugfix for 'itz deploy pipeline' and 'itz execute pipeline' where 'oc' was not on path.
+
 ## v.0.1.32
 
 - Fixed `itz login` command, --api_key was not working correctly.

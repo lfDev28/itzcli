@@ -16,6 +16,13 @@ assert_installed() {
   fi
 }
 
+# Check to see if we are in a docker container 
+if grep -q docker /proc/1/cgroup; then
+  SUDO=""
+else
+  SUDO="sudo"
+fi
+
 # Check to make sure that curl is installed...
 assert_installed curl
 assert_installed tar
@@ -40,12 +47,12 @@ curl -sS -L -o /tmp/itzcli.tar.gz "${ITZ_RELEASE_URL}"
 # user to all it to the path in their favorite shell.
 if [[ ! -d "${ITZ_INSTALL_BIN_DIR}" ]]; then
   echo "Install bin directory \"${ITZ_INSTALL_BIN_DIR}\" does not exist; creating..." >&2
-  sudo mkdir -p "${ITZ_INSTALL_BIN_DIR}"
+  ${SUDO} mkdir -p "${ITZ_INSTALL_BIN_DIR}"
 fi
 
 (cd /tmp && tar xzf /tmp/itzcli.tar.gz)
-sudo mv /tmp/itzcli "${ITZ_INSTALL_BIN_DIR}"
-sudo mv /tmp/itz "${ITZ_INSTALL_BIN_DIR}"
+${SUDO} mv /tmp/itzcli "${ITZ_INSTALL_BIN_DIR}"
+${SUDO} mv /tmp/itz "${ITZ_INSTALL_BIN_DIR}"
 
 ON_PATH=$(echo "${PATH}" | grep -c "${ITZ_INSTALL_BIN_DIR}")
 if [[ ${ON_PATH} -eq 0 ]]; then

@@ -57,5 +57,6 @@ var FileChecks = []Check{
 var ActionChecks = []Check{
 	// This new action check will run if podman is the CLI tool of choice and if
 	// the podman machine exists and is up. If it is, it will then fix the date
+	// Cannot return a warning as this will cause CI to fail
 	NewCmdActionCheck("setting clock on podman machine", PodmanMachineExists(), UpdatePodmanMachineDate()),
 }
