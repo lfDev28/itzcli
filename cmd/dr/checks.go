@@ -50,6 +50,8 @@ var FileChecks = []Check{
 	// the --auto-fix flag.
 	NewFixableConfigFileCheck("cli-config.yaml", EmptyFileCreator),
 	NewResourceFileCheck(OneExistsOnPath("podman", "docker"), "%s was not found on your path", UpdateConfig("podman.path")),
+	// Check if oc is on the path and if it is, update the configuration file.
+	NewResourceFileCheck(OneExistsOnPath("oc", "kubectl"), "%s was not found on your path", UpdateConfig("oc.path")),
 }
 
 var ActionChecks = []Check{

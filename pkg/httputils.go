@@ -89,6 +89,7 @@ func readHttpGet(url string, auth string, handler ReturnCodeHandlerFunc) ([]byte
 }
 
 
+
 func readHttpPost(url string, auth string, body io.Reader, contentType string, handler ReturnCodeHandlerFunc) ([]byte, error) {
 	client := &http.Client{}
 	req, err := http.NewRequest("POST", url, body)

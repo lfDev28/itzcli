@@ -50,8 +50,7 @@ Executes the given workspace specified by the first arg. A "workspace" is a
 containerized environment that can be used to run commands without having to
 install all the prerequisites. An example workspace that is provided by default
 is the OCP (OpenShift Container Platform) Installer ("ocp-installer") workspace,
-which can be used to install OCP in air-gapped environments and on different
-cloud environments such as AWS (Amazon Web Services) and Azure.
+ecloud environments such as AWS (Amazon Web Services) and Azure.
 
 Using workspaces requires either Podman (see
 https://podman.io/docs/installation) or Docker (see

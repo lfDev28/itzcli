@@ -32,6 +32,17 @@ func MustITZHomeDir() string {
 	return home
 }
 
+
+// Use the templates folder for local development
+func GetLocalDir() string {
+	// Retunr the pwd
+	dir, err := os.Getwd()
+	if err != nil {
+		logger.Fatal(err)
+	}
+	return dir
+}
+
 // AppendToFilename appends the suffix to the name of the file. The file is expected
 // to be a URL
 func AppendToFilename(fn string, suffix string) (string, error) {

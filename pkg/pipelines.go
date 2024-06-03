@@ -261,17 +261,21 @@ func ExecPipelineRun(pipeline *v1beta1.Pipeline, run *v1beta1.PipelineRun, runSc
 		return fmt.Errorf("not currently implemented, make sure -c or --use-container is set to false")
 	} else {
 		logger.Debugf("Using local commands to execute the pipeline...")
+	
+	
 		cmd := exec.Command("bash", filepath.Join(MustITZHomeDir(), "cache", "run.sh"))
 		cmd.Env = append(cmd.Env, fmt.Sprintf("ITZ_OC_USER=%s", cred.Name))
 		cmd.Env = append(cmd.Env, fmt.Sprintf("ITZ_OC_PASS=%s", cred.ApiKey))
 		cmd.Env = append(cmd.Env, fmt.Sprintf("ITZ_OC_URL=%s", cluster.URL))
 		cmd.Env = append(cmd.Env, fmt.Sprintf("ITZ_PIPELINE=%s", pipelineURL))
 		cmd.Env = append(cmd.Env, fmt.Sprintf("ITZ_PIPELINE_RUN=%s", pipelineRunURL))
+		cmd.Env = append(cmd.Env, os.Environ()...)
 		logger.Tracef("running command: %s", cmd)
 		cmd.Stdout = out
 		cmd.Stderr = out
 		cmd.Stdin = in
 		err := cmd.Run()
+		fmt.Println(err)
 		if err != nil {
 			return err
 		}
