@@ -1,6 +1,8 @@
 package dr
 
-import "runtime"
+import (
+	"runtime"
+)
 
 // Create the checks for the configuration values that I know I'll need.
 
@@ -49,14 +51,30 @@ var FileChecks = []Check{
 	// created automatically by the checks above so long as the user specifies
 	// the --auto-fix flag.
 	NewFixableConfigFileCheck("cli-config.yaml", EmptyFileCreator),
-	NewResourceFileCheck(OneExistsOnPath("podman", "docker"), "%s was not found on your path", UpdateConfig("podman.path")),
+
+	// NewResourceFileCheck(OneExistsOnPath("podman", "docker"), "%s was not found on your path", UpdateConfig("podman.path")),
 	// Check if oc is on the path and if it is, update the configuration file.
 	NewResourceFileCheck(OneExistsOnPath("oc", "kubectl"), "%s was not found on your path", UpdateConfig("oc.path")),
+}
+
+// Function for Docker dependant checks as we need to programmatically check for docker for certain things such as the podman machine. Below we will append the NewResourceFileCheck to the FileChecks array only if not in a Docker machine
+
+func DockerDependantChecks() [] Check {
+if !Docker() {
+	FileChecks = append(FileChecks, NewResourceFileCheck(OneExistsOnPath("podman", "docker"), "%s was not found on your path", UpdateConfig("podman.path")))
+}
+
+return FileChecks
+
 }
 
 var ActionChecks = []Check{
 	// This new action check will run if podman is the CLI tool of choice and if
 	// the podman machine exists and is up. If it is, it will then fix the date
 	// Cannot return a warning as this will cause CI to fail
+
 	NewCmdActionCheck("setting clock on podman machine", PodmanMachineExists(), UpdatePodmanMachineDate()),
+
+	
 }
+

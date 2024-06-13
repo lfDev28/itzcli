@@ -4,7 +4,7 @@ set -ou pipefail
 
 ITZ_INSTALL_HOME=${ITZ_INSTALL_HOME:-/usr/local}
 ITZ_INSTALL_BIN_DIR=${ITZ_INSTALL_HOME}/bin
-ITZ_INSTALL_VER=${ITZ_INSTALL_VER:-v.0.1.33}
+ITZ_INSTALL_VER=${ITZ_INSTALL_VER:-v.0.1.34}
 
 echo "Installing itz to ${ITZ_INSTALL_BIN_DIR}..."
 
@@ -64,4 +64,5 @@ fi
 echo "Install successful!" >&2
 echo -n "Version: "
 "${ITZ_INSTALL_BIN_DIR}"/itz version
+
 exit $?

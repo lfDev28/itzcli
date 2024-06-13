@@ -238,6 +238,11 @@ type podmanMachineOutput struct {
 
 func PodmanMachineExists() PreChecker {
 	return func() bool {
+
+		if Docker() {
+			return true
+		}
+
 		podmanPath, err := exec.LookPath("podman")
 		if err != nil {
 			return false
@@ -542,4 +547,12 @@ func DoChecks(checks []Check, tryFix bool) []error {
 	}
 	logger.Info("Done.")
 	return errs
+}
+
+
+func Docker() bool {
+    if _, err := os.Stat("/.dockerenv"); err == nil {
+        return true
+    }
+    return false
 }
